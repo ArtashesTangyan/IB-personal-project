@@ -1,40 +1,39 @@
 import os
 from flask import Flask, request, jsonify, render_template
-import google.genai as genai
+import google.generativeai as genai
 
 app = Flask(__name__)
 
-# --- Get API key from environment variable ---
+# Load API key
 API_KEY = os.getenv("GOOGLE_API_KEY")
 if not API_KEY:
-    raise ValueError("Please set the GOOGLE_API_KEY environment variable in Render or locally.")
+    raise ValueError("GOOGLE_API_KEY is not set!")
+genai.configure(api_key=API_KEY)
 
-# --- Initialize Google AI client ---
-client = genai.Client(api_key=API_KEY)
+# Create model
+model = genai.GenerativeModel("gemini-1.5-flash")
 
-# --- Generate explanation ---
+
 def generate_explanation(topic):
     try:
-        response = client.responses.create(
-            model="text-bison-001",
-            input=f"Explain this topic in simple terms: {topic}"
+        response = model.generate_content(
+            f"Explain this topic in simple terms for a student: {topic}"
         )
-        return response.output_text
+        return response.text
     except Exception as e:
         return f"Error generating explanation: {e}"
 
-# --- Generate quiz ---
+
 def generate_quiz(topic):
     try:
-        response = client.responses.create(
-            model="text-bison-001",
-            input=f"Create a 5-question quiz about: {topic}. Only output the questions."
+        response = model.generate_content(
+            f"Create a 5-question quiz about {topic}. Only output the questions."
         )
-        return response.output_text
+        return response.text
     except Exception as e:
         return f"Error generating quiz: {e}"
 
-# --- API endpoint ---
+
 @app.route("/generate", methods=["POST"])
 def generate():
     data = request.get_json()
@@ -43,10 +42,11 @@ def generate():
     quiz = generate_quiz(topic)
     return jsonify({"explanation": explanation, "quiz": quiz})
 
-# --- Serve index.html from templates folder ---
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
