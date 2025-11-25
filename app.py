@@ -1,38 +1,54 @@
-from flask import Flask, request, jsonify, render_template
-from google import genai
 import os
+from flask import Flask, request, jsonify
+import google.genai as genai
 
 app = Flask(__name__)
 
-API_KEY = os.getenv("GEMINI_API_KEY")
+# --- Get API key from environment variable ---
+API_KEY = os.getenv("GOOGLE_API_KEY")
+if not API_KEY:
+    raise ValueError("Please set the GOOGLE_API_KEY environment variable in Render or locally.")
+
+# --- Initialize Google AI client ---
 client = genai.Client(api_key=API_KEY)
-MODEL = "gemini-2.5-flash"
+
+# --- Generate explanation ---
+def generate_explanation(topic):
+    try:
+        response = client.generate_text(
+            model="text-bison-001",
+            prompt=f"Explain this topic in simple terms: {topic}"
+        )
+        return response.text
+    except Exception as e:
+        return f"Error generating explanation: {e}"
+
+# --- Generate quiz ---
+def generate_quiz(topic):
+    try:
+        response = client.generate_text(
+            model="text-bison-001",
+            prompt=f"Create a 5-question quiz about: {topic}. Only output the questions."
+        )
+        return response.text
+    except Exception as e:
+        return f"Error generating quiz: {e}"
+
+# --- API endpoint ---
+@app.route("/generate", methods=["POST"])
+def generate():
+    data = request.get_json()
+    topic = data.get("topic", "")
+    explanation = generate_explanation(topic)
+    quiz = generate_quiz(topic)
+    return jsonify({"explanation": explanation, "quiz": quiz})
+
+# --- Serve index.html ---
+from flask import send_from_directory
 
 @app.route("/")
-def home():
-    return render_template("index.html")
-
-@app.route("/api/generate", methods=["POST"])
-def generate():
-    topic = request.json.get("topic", "")
-    try:
-        explanation = client.models.generate_content(
-            model=MODEL,
-            contents=f"Explain {topic} in simple terms."
-        ).text
-
-        quiz = client.models.generate_content(
-            model=MODEL,
-            contents=f"Create a 5-question quiz about {topic}."
-        ).text
-
-        return jsonify({
-            "explanation": explanation,
-            "quiz": quiz
-        })
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+def index():
+    return send_from_directory(os.getcwd(), "index.html")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    app.run(debug=True)
