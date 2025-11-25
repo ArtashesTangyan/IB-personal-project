@@ -1,42 +1,53 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import google.generativeai as genai
 import os
 
 app = Flask(__name__)
+CORS(app)
 
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+# --- CONFIG ---
+os.environ["GOOGLE_API_KEY"] = "YOUR_API_KEY_HERE"
+genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 
-model = genai.GenerativeModel("gemini-1.5-flash-latest")
+model = genai.GenerativeModel("gemini-1.5-flash")
 
-@app.route("/")
-def index():
-    return render_template("index.html")
 
-@app.route("/explanation", methods=["POST"])
-def explanation():
+@app.route("/explain", methods=["POST"])
+def explain():
     try:
-        topic = request.json.get("topic", "")
+        data = request.get_json()
+        text = data.get("text", "")
 
-        response = model.generate_content(f"Explain this topic simply: {topic}")
+        response = model.generate_content(
+            f"Explain this text clearly for a student: {text}"
+        )
 
         return jsonify({"result": response.text})
+
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Error generating explanation: {str(e)}"}), 500
 
 
 @app.route("/quiz", methods=["POST"])
 def quiz():
     try:
-        topic = request.json.get("topic", "")
+        data = request.get_json()
+        text = data.get("text", "")
 
         response = model.generate_content(
-            f"Create a 5-question quiz on this topic: {topic}"
+            f"Create a 5-question quiz based on this text. Make questions short: {text}"
         )
 
         return jsonify({"result": response.text})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
+    except Exception as e:
+        return jsonify({"error": f"Error generating quiz: {str(e)}"}), 500
+
+
+@app.route("/")
+def home():
+    return "API is running!"
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(debug=True)
