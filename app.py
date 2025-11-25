@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import google.genai as genai
 
 app = Flask(__name__)
@@ -43,12 +43,10 @@ def generate():
     quiz = generate_quiz(topic)
     return jsonify({"explanation": explanation, "quiz": quiz})
 
-# --- Serve index.html ---
-from flask import send_from_directory
-
+# --- Serve index.html from templates folder ---
 @app.route("/")
 def index():
-    return send_from_directory(os.getcwd(), "index.html")
+    return render_template("index.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
