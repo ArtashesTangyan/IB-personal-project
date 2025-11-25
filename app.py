@@ -15,22 +15,22 @@ client = genai.Client(api_key=API_KEY)
 # --- Generate explanation ---
 def generate_explanation(topic):
     try:
-        response = client.generate_text(
+        response = client.responses.create(
             model="text-bison-001",
-            prompt=f"Explain this topic in simple terms: {topic}"
+            input=f"Explain this topic in simple terms: {topic}"
         )
-        return response.text
+        return response.output_text
     except Exception as e:
         return f"Error generating explanation: {e}"
 
 # --- Generate quiz ---
 def generate_quiz(topic):
     try:
-        response = client.generate_text(
+        response = client.responses.create(
             model="text-bison-001",
-            prompt=f"Create a 5-question quiz about: {topic}. Only output the questions."
+            input=f"Create a 5-question quiz about: {topic}. Only output the questions."
         )
-        return response.text
+        return response.output_text
     except Exception as e:
         return f"Error generating quiz: {e}"
 
