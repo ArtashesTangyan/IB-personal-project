@@ -12,8 +12,8 @@ if not api_key:
     raise ValueError("Please set the GOOGLE_API_KEY environment variable")
 genai.configure(api_key=api_key)
 
-# Use default free-tier model
-model = genai.get_default_model()  # Automatically uses available free-tier model
+# Use your free-tier model
+MODEL = "gemini-2.5-flash"
 
 @app.route("/")
 def home():
@@ -25,11 +25,10 @@ def explain():
         data = request.json
         text = data.get("text", "")
 
-        response = model.generate_content(
-            f"Explain the following IB topic in simple language:\n\n{text}"
-        )
+        response = genai.chat(model=MODEL, 
+                              messages=[{"role": "user", "content": f"Explain the following IB topic in simple language:\n\n{text}"}])
 
-        return jsonify({"explanation": response.text})
+        return jsonify({"explanation": response.last.message["content"]})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -40,11 +39,10 @@ def quiz():
         data = request.json
         text = data.get("text", "")
 
-        response = model.generate_content(
-            f"Create a 5-question quiz with answers based on this IB topic:\n\n{text}"
-        )
+        response = genai.chat(model=MODEL, 
+                              messages=[{"role": "user", "content": f"Create a 5-question quiz with answers based on this IB topic:\n\n{text}"}])
 
-        return jsonify({"quiz": response.text})
+        return jsonify({"quiz": response.last.message["content"]})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
