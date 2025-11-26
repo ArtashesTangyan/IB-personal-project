@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # Set your OpenRouter API key in the environment variable OPENROUTER_API_KEY
 OPENROUTER_KEY = os.environ.get("OPENROUTER_API_KEY")
-MODEL = "deepseek-r1"  # the model you chose
+MODEL = "deepseek/deepseek-r1"  # the model you chose
 
 BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -56,3 +56,4 @@ def generate():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
