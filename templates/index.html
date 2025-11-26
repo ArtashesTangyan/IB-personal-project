@@ -1,125 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Artashes Personal Project - AI Study Helper</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to right, #89f7fe, #66a6ff);
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            color: #333;
-        }
-
-        .container {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-top: 50px;
-            width: 600px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-
-        h1 {
-            text-align: center;
-            color: #4a4aef;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 12px 15px;
-            margin: 10px 0 20px 0;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
-
-        button {
-            background-color: #4a4aef;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            width: 100%;
-        }
-
-        button:hover {
-            background-color: #3636c8;
-        }
-
-        h2 {
-            margin-top: 25px;
-            color: #4a4aef;
-        }
-
-        #explanation, #quiz {
-            background: #f7f7f7;
-            border-radius: 8px;
-            padding: 15px;
-            min-height: 60px;
-            white-space: pre-wrap;
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 12px;
-            color: #555;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <title>Artashes Personal Project - AI Study Helper</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: linear-gradient(#e6f0ff,#f8fcff); margin:0; padding:0; display:flex; justify-content:center; }
+    .card { width:600px; margin:40px; background:#fff; border-radius:12px; padding:24px; box-shadow:0 12px 28px rgba(0,0,0,0.12); }
+    h1{ margin:0 0 8px 0; color:#2d4fd6 }
+    input { width:100%; padding:12px; margin:14px 0; border-radius:8px; border:1px solid #ddd; font-size:16px }
+    button { width:100%; padding:12px; background:#2d4fd6; color:#fff; border:none; border-radius:8px; font-size:16px; cursor:pointer }
+    .section { margin-top:18px }
+    .box { background:#f6f8ff; padding:12px; border-radius:8px; min-height:80px; white-space:pre-wrap; }
+    footer { text-align:center; margin-top:16px; color:#666; font-size:13px }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Artashes Personal Project - AI Study Helper</h1>
+  <div class="card">
+    <h1>Artashes Personal Project</h1>
+    <div>AI Study Helper</div>
 
-        <input type="text" id="topic" placeholder="Enter a topic (e.g., WW2)">
+    <input id="topic" placeholder="Enter a topic (e.g., World War I, Photosynthesis)">
 
-        <button onclick="generate()">Generate Explanation & Quiz</button>
+    <button id="generateBtn">Generate Explanation & Quiz</button>
 
-        <h2>Explanation</h2>
-        <div id="explanation">Your explanation will appear here...</div>
-
-        <h2>Quiz</h2>
-        <div id="quiz">Your quiz questions will appear here...</div>
-
-        <footer>Created by Artashes Tangyan - IB Personal Project</footer>
+    <div class="section">
+      <h3>Explanation</h3>
+      <div id="explanation" class="box">Your explanation will appear here.</div>
     </div>
 
-    <script>
-        async function generate() {
-            const topic = document.getElementById("topic").value;
-            if (!topic.trim()) {
-                alert("Please enter a topic.");
-                return;
-            }
+    <div class="section">
+      <h3>Quiz</h3>
+      <div id="quiz" class="box">Your quiz will appear here.</div>
+    </div>
 
-            document.getElementById("explanation").innerText = "Generating explanation...";
-            document.getElementById("quiz").innerText = "Generating quiz...";
+    <footer>Created by Artashes Tangyan — IB Personal Project</footer>
+  </div>
 
-            try {
-                const response = await fetch("/generate", {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({topic})
-                });
+  <script>
+    document.getElementById("generateBtn").addEventListener("click", async () => {
+      const topic = document.getElementById("topic").value.trim();
+      if (!topic) { alert("Please enter a topic."); return; }
 
-                if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
+      document.getElementById("explanation").innerText = "Generating explanation...";
+      document.getElementById("quiz").innerText = "Generating quiz...";
 
-                const data = await response.json();
-                document.getElementById("explanation").innerText = data.explanation;
-                document.getElementById("quiz").innerText = data.quiz;
-            } catch (error) {
-                document.getElementById("explanation").innerText = "Error generating explanation: " + error;
-                document.getElementById("quiz").innerText = "Error generating quiz: " + error;
-            }
+      try {
+        const res = await fetch("/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ topic })
+        });
+
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(`Server responded ${res.status}: ${txt}`);
         }
-    </script>
+
+        const data = await res.json();
+        document.getElementById("explanation").innerText = data.explanation || "No explanation returned.";
+        document.getElementById("quiz").innerText = data.quiz || "No quiz returned.";
+      } catch (err) {
+        document.getElementById("explanation").innerText = "Error generating explanation: " + err;
+        document.getElementById("quiz").innerText = "Error generating quiz: " + err;
+        console.error(err);
+      }
+    });
+  </script>
 </body>
 </html>
