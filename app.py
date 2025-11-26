@@ -1,24 +1,22 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, render_template, jsonify
 from flask_cors import CORS
-import google.generativeai as genai
 import os
+import google.generativeai as genai
 
 app = Flask(__name__)
 CORS(app)
 
-# Set your API key (make sure you have set this in Render as an environment variable)
-genai.api_key = os.environ.get("GENAI_API_KEY")
-
-# Use the free-tier model directly
-MODEL = "gemini-2.5-flash"
+# Set API key from environment variable
+genai.api_key = os.getenv("GOOGLE_API_KEY")
+MODEL = "gemini-2.5-flash"  # Your free-tier model
 
 @app.route("/")
 def home():
-    return "IB Project backend is running!"
+    return render_template("index.html")
 
-@app.route("/explanation", methods=["POST"])
-def generate_explanation():
-    data = request.get_json()
+@app.route("/generate", methods=["POST"])
+def generate():
+    data = request.json
     topic = data.get("topic", "")
 
     if not topic:
@@ -27,34 +25,13 @@ def generate_explanation():
     try:
         response = genai.generate_text(
             model=MODEL,
-            prompt=f"Explain the following topic clearly for a 9th grader: {topic}",
-            temperature=0.7,
-            max_output_tokens=500
+            prompt=f"Explain {topic} in simple terms and provide a short quiz."
         )
-        explanation = response.result
-        return jsonify({"explanation": explanation})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/quiz", methods=["POST"])
-def generate_quiz():
-    data = request.get_json()
-    topic = data.get("topic", "")
-
-    if not topic:
-        return jsonify({"error": "No topic provided"}), 400
-
-    try:
-        response = genai.generate_text(
-            model=MODEL,
-            prompt=f"Create a 5-question multiple-choice quiz about: {topic}",
-            temperature=0.7,
-            max_output_tokens=500
-        )
-        quiz = response.result
-        return jsonify({"quiz": quiz})
+        text_output = response.text
+        return jsonify({"result": text_output})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
