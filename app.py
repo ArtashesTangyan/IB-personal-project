@@ -4,9 +4,9 @@ import requests
 
 app = Flask(__name__)
 
-# OpenRouter API key from environment variable
+# OpenRouter API key (set in Render environment variables as OPENROUTER_API_KEY)
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
-MODEL = "openai/gpt-3.5-turbo"  # make sure this is correct per your OpenRouter dashboard
+MODEL = "openai/gpt-3.5-turbo"  # Change to your available model in OpenRouter dashboard
 
 HEADERS = {
     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
