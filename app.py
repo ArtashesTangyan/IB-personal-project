@@ -4,14 +4,15 @@ import requests
 
 app = Flask(__name__)
 
-# OpenRouter API key from environment variable
+# Set your OpenRouter API key in the environment variable OPENROUTER_API_KEY
 OPENROUTER_KEY = os.environ.get("OPENROUTER_API_KEY")
-MODEL = "deepseek-r1"  # <-- switched model here
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
+MODEL = "deepseek-r1"  # the model you chose
+
+BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 @app.route("/")
 def index():
-    return render_template("index.html")  # Frontend HTML
+    return render_template("index.html")  # your frontend HTML
 
 @app.route("/generate", methods=["POST"])
 def generate():
@@ -22,6 +23,7 @@ def generate():
     if not topic or not action:
         return jsonify({"error": "Missing topic or action"}), 400
 
+    # Construct prompt
     if action == "explanation":
         prompt = f"Explain in simple language: {topic}"
     elif action == "quiz":
@@ -39,10 +41,15 @@ def generate():
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 500
         }
-        response = requests.post(API_URL, json=payload, headers=headers)
+
+        response = requests.post(BASE_URL, json=payload, headers=headers)
         response.raise_for_status()
-        result = response.json()
-        return jsonify({"result": result["choices"][0]["message"]["content"]})
+        data = response.json()
+
+        # OpenRouter returns text in data["choices"][0]["message"]["content"]
+        result_text = data["choices"][0]["message"]["content"]
+
+        return jsonify({"result": result_text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
