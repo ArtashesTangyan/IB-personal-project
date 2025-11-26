@@ -1,92 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Study Helper</title>
-<style>
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(to right, #1f1c2c, #928dab);
-        color: #fff;
-        margin: 0;
-        padding: 0;
-    }
-    .container {
-        max-width: 800px;
-        margin: 50px auto;
-        padding: 30px;
-        background-color: rgba(0,0,0,0.5);
-        border-radius: 15px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.6);
-    }
-    h1 {
-        text-align: center;
-        margin-bottom: 20px;
-        color: #ffd700;
-    }
-    input, button {
-        padding: 10px;
-        font-size: 16px;
-        border-radius: 5px;
-        border: none;
-        margin-right: 10px;
-    }
-    input {
-        width: 60%;
-    }
-    button {
-        background-color: #ff7f50;
-        color: #fff;
-        cursor: pointer;
-    }
-    button:hover {
-        background-color: #ff4500;
-    }
-    .result {
-        margin-top: 20px;
-        padding: 15px;
-        background-color: rgba(255,255,255,0.1);
-        border-radius: 10px;
-        white-space: pre-wrap;
-    }
-</style>
+  <meta charset="UTF-8">
+  <title>AI Study Helper</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-<div class="container">
-    <h1>AI Study Helper</h1>
-    <input type="text" id="topic" placeholder="Enter topic (e.g. WW1)">
-    <button onclick="generate('explanation')">Generate Explanation</button>
-    <button onclick="generate('quiz')">Generate Quiz</button>
-    <div class="result" id="result"></div>
-</div>
+<body class="bg-gradient-to-r from-indigo-500 to-purple-500 min-h-screen flex items-center justify-center">
+  <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-lg">
+    <h1 class="text-2xl font-bold mb-4 text-center">AI Study Helper</h1>
 
-<script>
-async function generate(action) {
-    const topic = document.getElementById("topic").value;
-    const resultDiv = document.getElementById("result");
-    if (!topic) {
-        resultDiv.innerText = "Please enter a topic.";
-        return;
-    }
-    resultDiv.innerText = "Generating... ⏳";
+    <input id="topic" type="text" placeholder="Enter topic" class="border p-2 w-full rounded mb-4">
+    
+    <div class="flex justify-between mb-4">
+      <button onclick="generate('explanation')" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Generate Explanation</button>
+      <button onclick="generate('quiz')" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Generate Quiz</button>
+    </div>
 
-    try {
-        const res = await fetch("/generate", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({topic, action})
+    <div id="result" class="border p-4 rounded bg-gray-100 min-h-[150px]"></div>
+  </div>
+
+  <script>
+    async function generate(action) {
+      const topic = document.getElementById("topic").value;
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "Generating...";
+
+      try {
+        const response = await fetch("/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ topic, action })
         });
-        const data = await res.json();
-        if (data.error) {
-            resultDiv.innerText = "Error: " + data.error;
+
+        const data = await response.json();
+        if(data.error){
+          resultDiv.innerHTML = "Error: " + data.error;
         } else {
-            resultDiv.innerText = data.result;
+          resultDiv.innerHTML = data.result;
         }
-    } catch (err) {
-        resultDiv.innerText = "Error: " + err;
+      } catch (err) {
+        resultDiv.innerHTML = "Error: " + err;
+      }
     }
-}
-</script>
+  </script>
 </body>
 </html>
