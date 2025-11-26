@@ -4,26 +4,41 @@
   <meta charset="UTF-8">
   <title>AI Study Helper</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .typing::after {
+      content: '|';
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0%, 50%, 100% { opacity: 1; }
+      25%, 75% { opacity: 0; }
+    }
+  </style>
 </head>
 <body class="bg-gradient-to-r from-indigo-500 to-purple-500 min-h-screen flex items-center justify-center">
   <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-lg">
-    <h1 class="text-2xl font-bold mb-4 text-center">AI Study Helper</h1>
+    <h1 class="text-3xl font-bold mb-6 text-center text-indigo-700">AI Study Helper</h1>
 
-    <input id="topic" type="text" placeholder="Enter topic" class="border p-2 w-full rounded mb-4">
-    
+    <input id="topic" type="text" placeholder="Enter topic" class="border p-3 w-full rounded mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+
     <div class="flex justify-between mb-4">
-      <button onclick="generate('explanation')" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Generate Explanation</button>
-      <button onclick="generate('quiz')" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Generate Quiz</button>
+      <button onclick="generate('explanation')" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Generate Explanation</button>
+      <button onclick="generate('quiz')" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">Generate Quiz</button>
     </div>
 
-    <div id="result" class="border p-4 rounded bg-gray-100 min-h-[150px]"></div>
+    <div id="result" class="border p-4 rounded bg-gray-100 min-h-[150px] whitespace-pre-wrap"></div>
   </div>
 
   <script>
     async function generate(action) {
       const topic = document.getElementById("topic").value;
       const resultDiv = document.getElementById("result");
-      resultDiv.innerHTML = "Generating...";
+      if (!topic) {
+        resultDiv.innerHTML = "Please enter a topic.";
+        return;
+      }
+
+      resultDiv.innerHTML = "AI is thinking<span class='typing'></span>";
 
       try {
         const response = await fetch("/generate", {
@@ -36,7 +51,15 @@
         if(data.error){
           resultDiv.innerHTML = "Error: " + data.error;
         } else {
-          resultDiv.innerHTML = data.result;
+          // Simulate typing effect
+          resultDiv.innerHTML = "";
+          const text = data.result;
+          let i = 0;
+          const interval = setInterval(() => {
+            resultDiv.innerHTML += text[i];
+            i++;
+            if(i >= text.length) clearInterval(interval);
+          }, 25);
         }
       } catch (err) {
         resultDiv.innerHTML = "Error: " + err;
