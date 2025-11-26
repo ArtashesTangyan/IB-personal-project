@@ -6,18 +6,18 @@ app = Flask(__name__)
 
 # OpenRouter API key from environment variable
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
-MODEL = "openrouter-gpt-3.5-turbo"  # or any other OpenRouter model from your account
+MODEL = "openai/gpt-3.5-turbo"  # make sure this is correct per your OpenRouter dashboard
 
 HEADERS = {
     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
     "Content-Type": "application/json"
 }
 
-OPENROUTER_URL = f"https://openrouter.ai/api/v1/chat/completions"
+OPENROUTER_URL = "https://openrouter.ai/v1/chat/completions"
 
 @app.route("/")
 def index():
-    return render_template("index.html")  # Your frontend
+    return render_template("index.html")
 
 @app.route("/generate", methods=["POST"])
 def generate():
@@ -29,15 +29,15 @@ def generate():
         return jsonify({"error": "Missing topic or action"}), 400
 
     if action == "explanation":
-        prompt = f"Explain in simple language: {topic}"
+        user_prompt = f"Explain in simple language: {topic}"
     elif action == "quiz":
-        prompt = f"Create a 5-question multiple-choice quiz about: {topic}"
+        user_prompt = f"Create a 5-question multiple-choice quiz about: {topic}"
     else:
         return jsonify({"error": "Invalid action"}), 400
 
     payload = {
         "model": MODEL,
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": [{"role": "user", "content": user_prompt}],
         "temperature": 0.7
     }
 
@@ -47,9 +47,10 @@ def generate():
         result = response.json()
         text = result["choices"][0]["message"]["content"]
         return jsonify({"result": text})
+    except requests.exceptions.HTTPError as e:
+        return jsonify({"error": f"{e.response.status_code} {e.response.text}"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
