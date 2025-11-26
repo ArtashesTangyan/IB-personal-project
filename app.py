@@ -6,13 +6,24 @@ import google.generativeai as genai
 app = Flask(__name__)
 CORS(app)
 
-# Configure Gemini API Key
+# Configure API key
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 
-# ✅ Use a valid model name
-model = genai.GenerativeModel("gemini-1.5")
+# Automatically pick the first available model that supports generate_content
+models = genai.list_models()
+default_model_name = None
+for m in models:
+    if hasattr(m, "supported_generation_methods") and "generateContent" in m.supported_generation_methods:
+        default_model_name = m.name
+        break
 
-# Serve HTML interface
+if default_model_name is None:
+    raise RuntimeError("No available model supports generate_content!")
+
+model = genai.GenerativeModel(default_model_name)
+print(f"Using model: {default_model_name}")
+
+# Serve the HTML interface
 @app.route("/", methods=["GET"])
 def home():
     return render_template("index.html")
@@ -24,12 +35,12 @@ def generate():
         data = request.json
         topic = data.get("topic", "")
 
-        # Generate explanation
+        # Explanation
         explanation_resp = model.generate_content(
             f"Explain the following IB topic in simple language:\n\n{topic}"
         )
 
-        # Generate quiz
+        # Quiz
         quiz_resp = model.generate_content(
             f"Create a 5-question quiz with answers based on this IB topic:\n\n{topic}"
         )
@@ -38,8 +49,10 @@ def generate():
             "explanation": explanation_resp.text,
             "quiz": quiz_resp.text
         })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
