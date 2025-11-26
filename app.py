@@ -9,26 +9,27 @@ CORS(app)
 # Configure API key
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 
-# Automatically pick a default model your key can use
+# Automatically pick a free-tier compatible model
 models = genai.list_models()
 default_model_name = None
 for m in models:
-    if hasattr(m, "supported_generation_methods") and "generateContent" in m.supported_generation_methods:
+    # Only pick models that support generateContent and have free-tier
+    if hasattr(m, "supported_generation_methods") \
+       and "generateContent" in m.supported_generation_methods \
+       and getattr(m, "free_tier_available", False):
         default_model_name = m.name
         break
 
 if default_model_name is None:
-    raise RuntimeError("No model available for generate_content!")
+    raise RuntimeError("No free-tier model available for generate_content!")
 
 model = genai.GenerativeModel(default_model_name)
-print(f"Using default model: {default_model_name}")
+print(f"Using free-tier default model: {default_model_name}")
 
-# Serve HTML interface
 @app.route("/", methods=["GET"])
 def home():
     return render_template("index.html")
 
-# Generate explanation + quiz
 @app.route("/generate", methods=["POST"])
 def generate():
     try:
@@ -46,6 +47,7 @@ def generate():
             "explanation": explanation_resp.text,
             "quiz": quiz_resp.text
         })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
