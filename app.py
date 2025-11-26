@@ -1,47 +1,43 @@
-from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
 import os
+from flask import Flask, request, jsonify, render_template
 import google.generativeai as genai
 
 app = Flask(__name__)
-CORS(app)
 
-# Set your API key in environment variable GOOGLE_API_KEY
+# Configure API key from environment variable
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 
-MODEL = "models/text-bison-001"  # Free-tier model
+# Free-tier model
+MODEL = "models/text-bison-001"
 
 @app.route("/")
-def home():
-    return render_template("index.html")
+def index():
+    return render_template("index.html")  # Frontend HTML file
 
 @app.route("/generate", methods=["POST"])
 def generate():
     data = request.json
     topic = data.get("topic")
-    action = data.get("action")  # 'explanation' or 'quiz'
+    action = data.get("action")
 
     if not topic or not action:
-        return jsonify({"error": "Topic and action are required"}), 400
+        return jsonify({"error": "Missing topic or action"}), 400
 
-    prompt = ""
+    # Prepare prompt based on action
     if action == "explanation":
-        prompt = f"Write a clear B2-level explanation of the topic: {topic}."
+        prompt = f"Explain in simple language: {topic}"
     elif action == "quiz":
-        prompt = f"Create a short quiz (5 questions) about the topic: {topic}."
+        prompt = f"Create a 5-question multiple-choice quiz about: {topic}"
     else:
         return jsonify({"error": "Invalid action"}), 400
 
     try:
-        response = genai.generate_text(
-            model=MODEL,
-            prompt=prompt,
-            temperature=0.7,
-            max_output_tokens=500
-        )
-        return jsonify({"result": response.text})
+        # Generate response
+        resp = genai.generate_text(model=MODEL, prompt=prompt)
+        return jsonify({"result": resp.text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
