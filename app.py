@@ -1,7 +1,7 @@
+import os
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import google.generativeai as genai
-import os
 
 app = Flask(__name__)
 CORS(app)
@@ -10,7 +10,7 @@ CORS(app)
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# Serve the interface
+# Serve HTML interface
 @app.route("/", methods=["GET"])
 def home():
     return render_template("index.html")
