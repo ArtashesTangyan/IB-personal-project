@@ -45,23 +45,27 @@
       document.getElementById("quiz").innerText = "Generating quiz...";
 
       try {
-        const res = await fetch("/generate", {
+        // Call /explain
+        const explainRes = await fetch("/explain", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ topic })
+          body: JSON.stringify({ text: topic })
         });
+        const explainData = await explainRes.json();
+        document.getElementById("explanation").innerText = explainData.explanation || explainData.error;
 
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(`Server responded ${res.status}: ${txt}`);
-        }
+        // Call /quiz
+        const quizRes = await fetch("/quiz", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: topic })
+        });
+        const quizData = await quizRes.json();
+        document.getElementById("quiz").innerText = quizData.quiz || quizData.error;
 
-        const data = await res.json();
-        document.getElementById("explanation").innerText = data.explanation || "No explanation returned.";
-        document.getElementById("quiz").innerText = data.quiz || "No quiz returned.";
       } catch (err) {
-        document.getElementById("explanation").innerText = "Error generating explanation: " + err;
-        document.getElementById("quiz").innerText = "Error generating quiz: " + err;
+        document.getElementById("explanation").innerText = "Error: " + err;
+        document.getElementById("quiz").innerText = "Error: " + err;
         console.error(err);
       }
     });
