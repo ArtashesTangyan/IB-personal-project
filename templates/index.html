@@ -1,74 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Artashes Personal Project - AI Study Helper</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: linear-gradient(#e6f0ff,#f8fcff); margin:0; padding:0; display:flex; justify-content:center; }
-    .card { width:600px; margin:40px; background:#fff; border-radius:12px; padding:24px; box-shadow:0 12px 28px rgba(0,0,0,0.12); }
-    h1{ margin:0 0 8px 0; color:#2d4fd6 }
-    input { width:100%; padding:12px; margin:14px 0; border-radius:8px; border:1px solid #ddd; font-size:16px }
-    button { width:100%; padding:12px; background:#2d4fd6; color:#fff; border:none; border-radius:8px; font-size:16px; cursor:pointer }
-    .section { margin-top:18px }
-    .box { background:#f6f8ff; padding:12px; border-radius:8px; min-height:80px; white-space:pre-wrap; }
-    footer { text-align:center; margin-top:16px; color:#666; font-size:13px }
-  </style>
+    <meta charset="UTF-8">
+    <title>AI Study Helper</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        input, button { font-size: 16px; padding: 5px; margin: 5px 0; }
+        #output { margin-top: 20px; white-space: pre-wrap; }
+    </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Artashes Personal Project</h1>
-    <div>AI Study Helper</div>
+    <h1>AI Study Helper</h1>
+    <input type="text" id="topic" placeholder="Enter topic (e.g., WW2)" />
+    <button onclick="generate()">Generate Explanation & Quiz</button>
+    <div id="output"></div>
 
-    <input id="topic" placeholder="Enter a topic (e.g., World War I, Photosynthesis)">
-
-    <button id="generateBtn">Generate Explanation & Quiz</button>
-
-    <div class="section">
-      <h3>Explanation</h3>
-      <div id="explanation" class="box">Your explanation will appear here.</div>
-    </div>
-
-    <div class="section">
-      <h3>Quiz</h3>
-      <div id="quiz" class="box">Your quiz will appear here.</div>
-    </div>
-
-    <footer>Created by Artashes Tangyan — IB Personal Project</footer>
-  </div>
-
-  <script>
-    document.getElementById("generateBtn").addEventListener("click", async () => {
-      const topic = document.getElementById("topic").value.trim();
-      if (!topic) { alert("Please enter a topic."); return; }
-
-      document.getElementById("explanation").innerText = "Generating explanation...";
-      document.getElementById("quiz").innerText = "Generating quiz...";
-
-      try {
-        // Call /explain
-        const explainRes = await fetch("/explain", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: topic })
-        });
-        const explainData = await explainRes.json();
-        document.getElementById("explanation").innerText = explainData.explanation || explainData.error;
-
-        // Call /quiz
-        const quizRes = await fetch("/quiz", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: topic })
-        });
-        const quizData = await quizRes.json();
-        document.getElementById("quiz").innerText = quizData.quiz || quizData.error;
-
-      } catch (err) {
-        document.getElementById("explanation").innerText = "Error: " + err;
-        document.getElementById("quiz").innerText = "Error: " + err;
-        console.error(err);
-      }
-    });
-  </script>
+    <script>
+        async function generate() {
+            const topic = document.getElementById("topic").value;
+            const output = document.getElementById("output");
+            output.textContent = "Generating...";
+            
+            const response = await fetch("/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ topic })
+            });
+            const data = await response.json();
+            
+            if (data.error) {
+                output.textContent = "Error: " + data.error;
+            } else {
+                output.textContent = data.result;
+            }
+        }
+    </script>
 </body>
 </html>
