@@ -1,18 +1,21 @@
-import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import google.generativeai as genai
+import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")
 CORS(app)
 
 # Configure API Key
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 
 # Use a known default free-tier model
-DEFAULT_MODEL = "models/text-bison-001"  # works for free tier
-
+DEFAULT_MODEL = "models/text-bison-001"
 model = genai.GenerativeModel(DEFAULT_MODEL)
+
+@app.route("/", methods=["GET"])
+def home():
+    return render_template("index.html")  # <-- serve the HTML page
 
 @app.route("/explain", methods=["POST"])
 def explain():
@@ -37,10 +40,6 @@ def quiz():
         return jsonify({"quiz": response.text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-@app.route("/", methods=["GET"])
-def home():
-    return "IB Project backend is running!"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
