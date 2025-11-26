@@ -4,16 +4,8 @@ import requests
 
 app = Flask(__name__)
 
-# OpenRouter API key (set in Render environment variables as OPENROUTER_API_KEY)
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
-MODEL = "openai/gpt-3.5-turbo"  # Change to your available model in OpenRouter dashboard
-
-HEADERS = {
-    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-    "Content-Type": "application/json"
-}
-
-OPENROUTER_URL = "https://openrouter.ai/v1/chat/completions"
+MODEL = "openai/gpt-3.5-turbo"  # or your model from OpenRouter
 
 @app.route("/")
 def index():
@@ -38,17 +30,25 @@ def generate():
     payload = {
         "model": MODEL,
         "messages": [{"role": "user", "content": user_prompt}],
-        "temperature": 0.7
+        "temperature": 0.7,
+        "max_tokens": 500
+    }
+
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
     }
 
     try:
-        response = requests.post(OPENROUTER_URL, headers=HEADERS, json=payload)
-        response.raise_for_status()
-        result = response.json()
-        text = result["choices"][0]["message"]["content"]
+        resp = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
+        if resp.status_code != 200:
+            return jsonify({"error": f"{resp.status_code}: {resp.text}"}), 500
+
+        result_json = resp.json()
+        # OpenRouter returns choices[0].message.content
+        text = result_json["choices"][0]["message"]["content"]
         return jsonify({"result": text})
-    except requests.exceptions.HTTPError as e:
-        return jsonify({"error": f"{e.response.status_code} {e.response.text}"}), 500
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
