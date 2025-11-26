@@ -8,7 +8,9 @@ CORS(app)
 
 # Configure Gemini API Key
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
-model = genai.GenerativeModel("gemini-1.5-flash")
+
+# ✅ Use a valid model name
+model = genai.GenerativeModel("gemini-1.5")
 
 # Serve HTML interface
 @app.route("/", methods=["GET"])
@@ -22,10 +24,12 @@ def generate():
         data = request.json
         topic = data.get("topic", "")
 
+        # Generate explanation
         explanation_resp = model.generate_content(
             f"Explain the following IB topic in simple language:\n\n{topic}"
         )
 
+        # Generate quiz
         quiz_resp = model.generate_content(
             f"Create a 5-question quiz with answers based on this IB topic:\n\n{topic}"
         )
