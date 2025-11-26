@@ -1,18 +1,23 @@
 import os
 from flask import Flask, request, jsonify, render_template
-import google.generativeai as genai
+import requests
 
 app = Flask(__name__)
 
-# Configure API key from environment variable
-genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
+# OpenRouter API key from environment variable
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+MODEL = "openrouter-gpt-3.5-turbo"  # or any other OpenRouter model from your account
 
-# Free-tier model
-MODEL = "models/text-bison-001"
+HEADERS = {
+    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+    "Content-Type": "application/json"
+}
+
+OPENROUTER_URL = f"https://openrouter.ai/api/v1/chat/completions"
 
 @app.route("/")
 def index():
-    return render_template("index.html")  # Frontend HTML file
+    return render_template("index.html")  # Your frontend
 
 @app.route("/generate", methods=["POST"])
 def generate():
@@ -23,7 +28,6 @@ def generate():
     if not topic or not action:
         return jsonify({"error": "Missing topic or action"}), 400
 
-    # Prepare prompt based on action
     if action == "explanation":
         prompt = f"Explain in simple language: {topic}"
     elif action == "quiz":
@@ -31,12 +35,21 @@ def generate():
     else:
         return jsonify({"error": "Invalid action"}), 400
 
+    payload = {
+        "model": MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.7
+    }
+
     try:
-        # Generate response
-        resp = genai.generate_text(model=MODEL, prompt=prompt)
-        return jsonify({"result": resp.text})
+        response = requests.post(OPENROUTER_URL, headers=HEADERS, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        text = result["choices"][0]["message"]["content"]
+        return jsonify({"result": text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
