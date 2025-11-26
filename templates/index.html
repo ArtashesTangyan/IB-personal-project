@@ -1,39 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Artashes Personal Project - AI Study Helper</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        input, button { font-size: 16px; padding: 5px; margin: 5px 0; }
-        #output { margin-top: 20px; white-space: pre-wrap; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Study Helper</title>
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(to right, #1f1c2c, #928dab);
+        color: #fff;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 30px;
+        background-color: rgba(0,0,0,0.5);
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.6);
+    }
+    h1 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #ffd700;
+    }
+    input, button {
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 5px;
+        border: none;
+        margin-right: 10px;
+    }
+    input {
+        width: 60%;
+    }
+    button {
+        background-color: #ff7f50;
+        color: #fff;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #ff4500;
+    }
+    .result {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: rgba(255,255,255,0.1);
+        border-radius: 10px;
+        white-space: pre-wrap;
+    }
+</style>
 </head>
 <body>
+<div class="container">
     <h1>AI Study Helper</h1>
-    <input type="text" id="topic" placeholder="Enter topic (e.g., WW2)" />
-    <button onclick="generate()">Generate Explanation & Quiz</button>
-    <div id="output"></div>
+    <input type="text" id="topic" placeholder="Enter topic (e.g. WW1)">
+    <button onclick="generate('explanation')">Generate Explanation</button>
+    <button onclick="generate('quiz')">Generate Quiz</button>
+    <div class="result" id="result"></div>
+</div>
 
-    <script>
-        async function generate() {
-            const topic = document.getElementById("topic").value;
-            const output = document.getElementById("output");
-            output.textContent = "Generating...";
-            
-            const response = await fetch("/generate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ topic })
-            });
-            const data = await response.json();
-            
-            if (data.error) {
-                output.textContent = "Error: " + data.error;
-            } else {
-                output.textContent = data.result;
-            }
+<script>
+async function generate(action) {
+    const topic = document.getElementById("topic").value;
+    const resultDiv = document.getElementById("result");
+    if (!topic) {
+        resultDiv.innerText = "Please enter a topic.";
+        return;
+    }
+    resultDiv.innerText = "Generating... ⏳";
+
+    try {
+        const res = await fetch("/generate", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({topic, action})
+        });
+        const data = await res.json();
+        if (data.error) {
+            resultDiv.innerText = "Error: " + data.error;
+        } else {
+            resultDiv.innerText = data.result;
         }
-    </script>
+    } catch (err) {
+        resultDiv.innerText = "Error: " + err;
+    }
+}
+</script>
 </body>
 </html>
