@@ -4,15 +4,15 @@ import requests
 
 app = Flask(__name__)
 
-# Set your OpenRouter API key in the environment variable OPENROUTER_API_KEY
-OPENROUTER_KEY = os.environ.get("OPENROUTER_API_KEY")
-MODEL = "deepseek/deepseek-r1"  # the model you chose
+# OpenRouter API key from environment variable
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
-BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
+# Free-tier supported model
+MODEL = "openrouter/auto"  # Works on free-tier
 
 @app.route("/")
 def index():
-    return render_template("index.html")  # your frontend HTML
+    return render_template("index.html")  # Your frontend HTML
 
 @app.route("/generate", methods=["POST"])
 def generate():
@@ -23,7 +23,7 @@ def generate():
     if not topic or not action:
         return jsonify({"error": "Missing topic or action"}), 400
 
-    # Construct prompt
+    # Prepare prompt based on action
     if action == "explanation":
         prompt = f"Explain in simple language: {topic}"
     elif action == "quiz":
@@ -33,7 +33,7 @@ def generate():
 
     try:
         headers = {
-            "Authorization": f"Bearer {OPENROUTER_KEY}",
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
             "Content-Type": "application/json"
         }
         payload = {
@@ -41,19 +41,16 @@ def generate():
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 500
         }
-
-        response = requests.post(BASE_URL, json=payload, headers=headers)
+        response = requests.post("https://openrouter.ai/api/v1/chat/completions",
+                                 json=payload, headers=headers)
         response.raise_for_status()
-        data = response.json()
-
-        # OpenRouter returns text in data["choices"][0]["message"]["content"]
-        result_text = data["choices"][0]["message"]["content"]
-
-        return jsonify({"result": result_text})
+        result = response.json()
+        # OpenRouter returns text inside: result['choices'][0]['message']['content']
+        text = result['choices'][0]['message']['content']
+        return jsonify({"result": text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-
