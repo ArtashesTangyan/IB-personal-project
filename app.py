@@ -8,7 +8,9 @@ CORS(app)
 
 # Set API key from environment variable
 genai.api_key = os.getenv("GOOGLE_API_KEY")
-MODEL = "gemini-2.5-flash"  # Your free-tier model
+
+# Correct model name format
+MODEL = "models/gemini-2.5-flash"
 
 @app.route("/")
 def home():
