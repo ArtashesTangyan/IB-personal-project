@@ -2,43 +2,109 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Study Helper</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    .typing::after {
-      content: '|';
-      animation: blink 1s infinite;
+    * { box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+    body {
+      margin: 0;
+      background: #f5f6fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
     }
-    @keyframes blink {
-      0%, 50%, 100% { opacity: 1; }
-      25%, 75% { opacity: 0; }
+    header {
+      background: #4e54c8;
+      width: 100%;
+      padding: 2rem 1rem;
+      text-align: center;
+      color: #fff;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    header h1 { margin: 0; font-size: 2rem; }
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 800px;
+      margin: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 0.5rem;
+    }
+    button {
+      background: #4e54c8;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    button:hover { background: #6366f1; }
+    .output {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      min-height: 100px;
+      white-space: pre-wrap;
+    }
+    .loading {
+      font-style: italic;
+      color: #666;
     }
   </style>
 </head>
-<body class="bg-gradient-to-r from-indigo-500 to-purple-500 min-h-screen flex items-center justify-center">
-  <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-lg">
-    <h1 class="text-3xl font-bold mb-6 text-center text-indigo-700">AI Study Helper</h1>
+<body>
 
-    <input id="topic" type="text" placeholder="Enter topic" class="border p-3 w-full rounded mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+  <header>
+    <h1>AI Study Helper</h1>
+    <p>Get explanations and quizzes instantly!</p>
+  </header>
 
-    <div class="flex justify-between mb-4">
-      <button onclick="generate('explanation')" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Generate Explanation</button>
-      <button onclick="generate('quiz')" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">Generate Quiz</button>
-    </div>
+  <main>
+    <label>
+      Topic:
+      <input type="text" id="topic" placeholder="Enter a topic (e.g., WW2)">
+    </label>
 
-    <div id="result" class="border p-4 rounded bg-gray-100 min-h-[150px] whitespace-pre-wrap"></div>
-  </div>
+    <label>
+      Action:
+      <select id="action">
+        <option value="explanation">Generate Explanation</option>
+        <option value="quiz">Generate Quiz</option>
+      </select>
+    </label>
+
+    <button id="generateBtn">Generate</button>
+
+    <div class="output" id="output">Your result will appear here...</div>
+  </main>
 
   <script>
-    async function generate(action) {
-      const topic = document.getElementById("topic").value;
-      const resultDiv = document.getElementById("result");
+    const button = document.getElementById("generateBtn");
+    const output = document.getElementById("output");
+
+    button.addEventListener("click", async () => {
+      const topic = document.getElementById("topic").value.trim();
+      const action = document.getElementById("action").value;
+
       if (!topic) {
-        resultDiv.innerHTML = "Please enter a topic.";
+        alert("Please enter a topic!");
         return;
       }
 
-      resultDiv.innerHTML = "AI is thinking<span class='typing'></span>";
+      output.innerHTML = "<span class='loading'>Generating...</span>";
 
       try {
         const response = await fetch("/generate", {
@@ -48,23 +114,18 @@
         });
 
         const data = await response.json();
-        if(data.error){
-          resultDiv.innerHTML = "Error: " + data.error;
+
+        if (data.error) {
+          output.innerHTML = `<span style="color:red;">Error: ${data.error}</span>`;
         } else {
-          // Typing effect
-          resultDiv.innerHTML = "";
-          const text = data.result;
-          let i = 0;
-          const interval = setInterval(() => {
-            resultDiv.innerHTML += text[i];
-            i++;
-            if(i >= text.length) clearInterval(interval);
-          }, 25);
+          output.textContent = data.result;
         }
+
       } catch (err) {
-        resultDiv.innerHTML = "Error: " + err;
+        output.innerHTML = `<span style="color:red;">Error: ${err.message}</span>`;
       }
-    }
+    });
   </script>
+
 </body>
 </html>
