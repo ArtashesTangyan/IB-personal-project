@@ -4,15 +4,14 @@ import requests
 
 app = Flask(__name__)
 
-# OpenRouter API key from environment variable
-OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+# Your existing model (works!)
+MODEL = "openrouter/auto"
 
-# Free-tier supported model
-MODEL = "openrouter/auto"  # Works on free-tier
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
 @app.route("/")
 def index():
-    return render_template("index.html")  # Your frontend HTML
+    return render_template("index.html")
 
 @app.route("/generate", methods=["POST"])
 def generate():
@@ -23,33 +22,46 @@ def generate():
     if not topic or not action:
         return jsonify({"error": "Missing topic or action"}), 400
 
-    # Prepare prompt based on action
     if action == "explanation":
-        prompt = f"Explain in simple language: {topic}"
+        prompt = f"Explain this topic in simple language: {topic}"
     elif action == "quiz":
-        prompt = f"Create a 5-question multiple-choice quiz about: {topic}"
+        prompt = (
+            f"Create a 5-question multiple-choice quiz about: {topic}.\n"
+            f"Each question must have A, B, C, D options and show the correct answer."
+        )
     else:
         return jsonify({"error": "Invalid action"}), 400
 
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "HTTP-Referer": "http://localhost",      # REQUIRED for OpenRouter
+        "X-Title": "AI Study Helper",            # Recommended
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 500
+    }
+
     try:
-        headers = {
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "model": MODEL,
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 500
-        }
-        response = requests.post("https://openrouter.ai/api/v1/chat/completions",
-                                 json=payload, headers=headers)
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            json=payload,
+            headers=headers
+        )
         response.raise_for_status()
-        result = response.json()
-        # OpenRouter returns text inside: result['choices'][0]['message']['content']
-        text = result['choices'][0]['message']['content']
+
+        data = response.json()
+
+        text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+
         return jsonify({"result": text})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
