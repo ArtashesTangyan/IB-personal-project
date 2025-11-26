@@ -4,113 +4,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Artashes Personal Project - AI Study Helper</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.0/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
-        /* Simple fade-in animation */
-        .fade-in {
-            animation: fadeIn 1s ease-in-out;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            margin: 0;
+            padding: 0;
         }
-
-        @keyframes fadeIn {
-            from {opacity: 0; transform: translateY(20px);}
-            to {opacity: 1; transform: translateY(0);}
+        header {
+            text-align: center;
+            padding: 2rem;
+            font-size: 2rem;
+            font-weight: bold;
         }
-
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #4f46e5;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg);}
-            100% { transform: rotate(360deg);}
+        input, select, button {
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 5px;
+            border: none;
+            font-size: 1rem;
+        }
+        button {
+            background-color: #ff6b6b;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #ff4757;
+        }
+        .output-section {
+            background: rgba(0,0,0,0.2);
+            padding: 1rem;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 700px;
+            margin-top: 1rem;
+        }
+        .typing {
+            border-right: 2px solid #fff;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            animation: blink 0.7s step-end infinite;
+        }
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
         }
     </style>
 </head>
-<body class="bg-gradient-to-r from-purple-200 via-pink-200 to-yellow-100 min-h-screen flex flex-col items-center font-sans">
-
-    <header class="mt-10 text-center fade-in">
-        <h1 class="text-4xl font-bold text-purple-700 mb-2">Artashes Personal Project</h1>
-        <p class="text-lg text-gray-700">AI Study Helper</p>
-    </header>
-
-    <main class="w-full max-w-3xl p-6 mt-6 bg-white rounded-xl shadow-lg fade-in">
-        <div class="mb-6">
-            <label for="topic" class="block text-gray-700 font-semibold mb-2">Enter Topic:</label>
-            <input type="text" id="topic" class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="E.g., World War 2">
+<body>
+    <header>Artashes Personal Project - AI Study Helper</header>
+    <main>
+        <input type="text" id="topic" placeholder="Enter topic e.g. WW2">
+        <button onclick="generate('explanation')">Generate Explanation</button>
+        <button onclick="generate('quiz')">Generate Quiz</button>
+        
+        <div class="output-section" id="explanation-section">
+            <div class="section-title">Explanation</div>
+            <div id="explanation" class="typing"></div>
         </div>
 
-        <div class="flex justify-center gap-4 mb-6">
-            <button id="explanationBtn" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">Generate Explanation</button>
-            <button id="quizBtn" class="bg-pink-600 text-white px-6 py-2 rounded-lg hover:bg-pink-700 transition">Generate Quiz</button>
-        </div>
-
-        <div id="loader" class="flex justify-center mb-4 hidden">
-            <span class="loader"></span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <section class="p-4 bg-purple-50 rounded-lg shadow-md fade-in">
-                <h2 class="text-2xl font-semibold text-purple-700 mb-2">Explanation</h2>
-                <div id="explanationContent" class="text-gray-800"></div>
-            </section>
-
-            <section class="p-4 bg-pink-50 rounded-lg shadow-md fade-in">
-                <h2 class="text-2xl font-semibold text-pink-700 mb-2">Quiz</h2>
-                <div id="quizContent" class="text-gray-800"></div>
-            </section>
+        <div class="output-section" id="quiz-section">
+            <div class="section-title">Quiz</div>
+            <div id="quiz" class="typing"></div>
         </div>
     </main>
 
-    <footer class="mt-10 mb-6 text-gray-600 fade-in">
-        &copy; 2025 Artashes Personal Project
-    </footer>
-
     <script>
-        const explanationBtn = document.getElementById("explanationBtn");
-        const quizBtn = document.getElementById("quizBtn");
-        const topicInput = document.getElementById("topic");
-        const explanationContent = document.getElementById("explanationContent");
-        const quizContent = document.getElementById("quizContent");
-        const loader = document.getElementById("loader");
+        function typeText(element, text) {
+            element.innerHTML = '';
+            let i = 0;
+            let interval = setInterval(() => {
+                element.innerHTML += text.charAt(i);
+                i++;
+                if (i >= text.length) clearInterval(interval);
+            }, 20); // speed of typing
+        }
 
         async function generate(action) {
-            const topic = topicInput.value.trim();
+            const topic = document.getElementById('topic').value;
             if (!topic) {
-                alert("Please enter a topic!");
+                alert('Please enter a topic');
                 return;
             }
 
-            loader.classList.remove("hidden");
+            const outputEl = action === 'explanation' ? document.getElementById('explanation') : document.getElementById('quiz');
+            outputEl.innerHTML = '';
 
             try {
-                const response = await axios.post("/generate", { topic, action });
-                loader.classList.add("hidden");
-
-                if (response.data.error) {
-                    alert("Error: " + response.data.error);
-                    return;
-                }
-
-                if (action === "explanation") {
-                    explanationContent.innerHTML = response.data.result.replace(/\n/g, "<br>");
-                } else if (action === "quiz") {
-                    quizContent.innerHTML = response.data.result.replace(/\n/g, "<br>");
-                }
+                const response = await axios.post('/generate', { topic, action });
+                typeText(outputEl, response.data.result);
             } catch (err) {
-                loader.classList.add("hidden");
-                alert("Request failed: " + err);
+                console.error(err);
+                typeText(outputEl, `Error: ${err.response ? err.response.data.error : err.message}`);
             }
         }
-
-        explanationBtn.addEventListener("click", () => generate("explanation"));
-        quizBtn.addEventListener("click", () => generate("quiz"));
     </script>
 </body>
 </html>
