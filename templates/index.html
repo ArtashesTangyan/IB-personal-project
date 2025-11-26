@@ -4,112 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Artashes Personal Project - AI Study Helper</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            text-align: center;
-            padding: 2rem;
-            font-size: 2rem;
-            font-weight: bold;
-        }
-        main {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 1rem;
-        }
-        input, select, button {
-            padding: 0.5rem;
-            margin: 0.5rem 0;
-            border-radius: 5px;
-            border: none;
-            font-size: 1rem;
-        }
-        button {
-            background-color: #ff6b6b;
-            color: #fff;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        button:hover {
-            background-color: #ff4757;
-        }
-        .output-section {
-            background: rgba(0,0,0,0.2);
-            padding: 1rem;
-            border-radius: 10px;
-            width: 80%;
-            max-width: 700px;
-            margin-top: 1rem;
-        }
         .typing {
-            border-right: 2px solid #fff;
-            white-space: pre-wrap;
-            overflow-wrap: break-word;
-            animation: blink 0.7s step-end infinite;
+            border-right: .15em solid #4f46e5;
+            white-space: nowrap;
+            overflow: hidden;
+            animation: typing 1.5s steps(40, end), blink-caret .75s step-end infinite;
         }
-        @keyframes blink {
-            50% { border-color: transparent; }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
         }
-        .section-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #4f46e5; }
         }
     </style>
 </head>
-<body>
-    <header>Tanyan Artashes IB Personal Project - AI Study Helper</header>
-    <main>
-        <input type="text" id="topic" placeholder="Enter topic e.g. WW2">
-        <button onclick="generate('explanation')">Generate Explanation</button>
-        <button onclick="generate('quiz')">Generate Quiz</button>
+<body class="bg-gradient-to-r from-indigo-100 to-purple-100 min-h-screen flex flex-col items-center justify-start py-12">
+
+    <h1 class="text-4xl font-bold text-indigo-800 mb-6">Artashes Personal Project - AI Study Helper</h1>
+
+    <div class="w-full max-w-xl p-6 bg-white rounded-xl shadow-lg">
+        <input id="topicInput" type="text" placeholder="Enter topic (e.g., WW2)" 
+               class="w-full px-4 py-2 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
         
-        <div class="output-section" id="explanation-section">
-            <div class="section-title">Explanation</div>
-            <div id="explanation" class="typing"></div>
+        <div class="flex justify-between mb-4">
+            <button onclick="generate('explanation')" class="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 transition">Generate Explanation</button>
+            <button onclick="generate('quiz')" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition">Generate Quiz</button>
         </div>
 
-        <div class="output-section" id="quiz-section">
-            <div class="section-title">Quiz</div>
-            <div id="quiz" class="typing"></div>
+        <div>
+            <h2 class="text-xl font-semibold text-indigo-700 mb-2">Explanation:</h2>
+            <div id="explanationOutput" class="p-4 bg-indigo-50 rounded-lg min-h-[80px]"></div>
         </div>
-    </main>
 
+        <div class="mt-4">
+            <h2 class="text-xl font-semibold text-purple-700 mb-2">Quiz:</h2>
+            <div id="quizOutput" class="p-4 bg-purple-50 rounded-lg min-h-[80px]"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        function typeText(element, text) {
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function typeText(element, text) {
             element.innerHTML = '';
-            let i = 0;
-            let interval = setInterval(() => {
-                element.innerHTML += text.charAt(i);
-                i++;
-                if (i >= text.length) clearInterval(interval);
-            }, 20); // speed of typing
+            for (let i = 0; i < text.length; i++) {
+                element.innerHTML += text[i];
+                await sleep(20); // typing speed
+            }
         }
 
         async function generate(action) {
-            const topic = document.getElementById('topic').value;
-            if (!topic) {
-                alert('Please enter a topic');
-                return;
-            }
+            const topic = document.getElementById('topicInput').value.trim();
+            if (!topic) return alert("Please enter a topic!");
 
-            const outputEl = action === 'explanation' ? document.getElementById('explanation') : document.getElementById('quiz');
-            outputEl.innerHTML = '';
+            const explanationDiv = document.getElementById('explanationOutput');
+            const quizDiv = document.getElementById('quizOutput');
+
+            // Clear previous outputs
+            if (action === 'explanation') explanationDiv.innerHTML = "Typing...";
+            if (action === 'quiz') quizDiv.innerHTML = "Typing...";
 
             try {
                 const response = await axios.post('/generate', { topic, action });
-                typeText(outputEl, response.data.result);
+                const result = response.data.result;
+
+                if (action === 'explanation') {
+                    await typeText(explanationDiv, result);
+                } else if (action === 'quiz') {
+                    await typeText(quizDiv, result);
+                }
+
             } catch (err) {
                 console.error(err);
-                typeText(outputEl, `Error: ${err.response ? err.response.data.error : err.message}`);
+                const errorMsg = err.response?.data?.error || err.message || "Unknown error";
+                if (action === 'explanation') explanationDiv.innerHTML = "Error: " + errorMsg;
+                if (action === 'quiz') quizDiv.innerHTML = "Error: " + errorMsg;
             }
         }
     </script>
