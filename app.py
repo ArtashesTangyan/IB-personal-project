@@ -9,7 +9,7 @@ CORS(app)
 # Configure API key
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 
-# Automatically pick the first available model that supports generate_content
+# Automatically pick a default model your key can use
 models = genai.list_models()
 default_model_name = None
 for m in models:
@@ -18,12 +18,12 @@ for m in models:
         break
 
 if default_model_name is None:
-    raise RuntimeError("No available model supports generate_content!")
+    raise RuntimeError("No model available for generate_content!")
 
 model = genai.GenerativeModel(default_model_name)
-print(f"Using model: {default_model_name}")
+print(f"Using default model: {default_model_name}")
 
-# Serve the HTML interface
+# Serve HTML interface
 @app.route("/", methods=["GET"])
 def home():
     return render_template("index.html")
@@ -35,12 +35,9 @@ def generate():
         data = request.json
         topic = data.get("topic", "")
 
-        # Explanation
         explanation_resp = model.generate_content(
             f"Explain the following IB topic in simple language:\n\n{topic}"
         )
-
-        # Quiz
         quiz_resp = model.generate_content(
             f"Create a 5-question quiz with answers based on this IB topic:\n\n{topic}"
         )
@@ -49,7 +46,6 @@ def generate():
             "explanation": explanation_resp.text,
             "quiz": quiz_resp.text
         })
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
